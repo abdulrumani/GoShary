@@ -1,0 +1,76 @@
+name: goshary_app
+description: A premium e-commerce mobile application linked with WordPress/WooCommerce.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.1.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # --- Localization (Language Support) ---
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
+
+  # --- State Management & Architecture ---
+  flutter_bloc: ^8.1.4
+  equatable: ^2.0.5  # اسٹیٹ کو کمپیئر کرنے کے لیے
+  get_it: ^7.6.7     # Dependency Injection (DI)
+
+  # --- Navigation ---
+  go_router: ^13.2.0
+
+  # --- Networking & API ---
+  dio: ^5.4.1
+
+  # --- Local Storage ---
+  shared_preferences: ^2.2.2
+
+  # --- UI Components & Utilities ---
+  cached_network_image: ^3.3.1  # تصاویر کیش کرنے کے لیے
+  carousel_slider: ^5.0.0       # ہوم پیج سلائیڈر کے لیے
+  flutter_rating_bar: ^4.0.1    # ریویوز کے لیے سٹارز
+  flutter_html: ^3.0.0-beta.2   # ورڈپریس کی ڈسکرپشن (HTML) دکھانے کے لیے
+
+  # --- Features Utilities ---
+  url_launcher: ^6.2.5          # کال/ای میل کھولنے کے لیے
+  share_plus: ^9.0.0            # ریفرل لنک شیئر کرنے کے لیے
+
+  # --- Firebase & Notifications ---
+  # (نوٹ: فائر بیس سیٹ اپ کرنے کے بعد ان ورژنز کو چیک کر لیجیے گا)
+  firebase_core: ^2.27.0
+  firebase_messaging: ^14.7.19
+  flutter_local_notifications: ^18.0.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+# For Material Design 3
+flutter:
+  uses-material-design: true
+
+  # --- Assets Registration ---
+  # یقینی بنائیں کہ یہ فولڈرز آپ کے پراجیکٹ میں موجود ہوں
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/l10n/
+
+  # --- Fonts Configuration ---
+  # گوگل فونٹس سے Poppins ڈاؤنلوڈ کر کے assets/fonts میں رکھیں
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+        - asset: assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700
