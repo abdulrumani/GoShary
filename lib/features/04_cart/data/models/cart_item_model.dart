@@ -1,49 +1,69 @@
-class CartItemModel {
-  final String key; // Cart Item Key (WooCommerce unique ID)
-  final int productId;
-  final String name;
-  final String price; // یونٹ کی قیمت
-  final int quantity;
-  final String imageUrl;
-  final Map<String, dynamic> variation; // Size/Color details
-  final String lineSubtotal; // کل قیمت (Price x Quantity)
+import '../../domain/entities/cart_item.dart';
 
+class CartItemModel extends CartItem {
   CartItemModel({
-    required this.key,
-    required this.productId,
-    required this.name,
-    required this.price,
-    required this.quantity,
-    required this.imageUrl,
-    required this.variation,
-    required this.lineSubtotal,
+    required super.key,
+    required super.productId,
+    required super.name,
+    required super.price,
+    required super.quantity,
+    required super.imageUrl,
+    required super.variation,
+    required super.lineSubtotal,
   });
 
   factory CartItemModel.fromJson(Map<String, dynamic> json) {
-    // Images کو پارس کرنا
+    // 1. Images Parsing (محفوظ طریقہ)
     String img = '';
     if (json['images'] != null && (json['images'] as List).isNotEmpty) {
       img = json['images'][0]['src'] ?? '';
     }
 
-    // Prices کو پارس کرنا (WooCommerce Store API cents میں دیتا ہے، اس لیے /100 کریں)
-    // یا اگر سادہ API ہے تو سٹرنگ۔ Store API میں عام طور پر 'prices' کا آبجیکٹ ہوتا ہے۔
-    String unitPrice = '0';
-    String total = '0';
+    // 2. Prices Parsing (محفوظ طریقہ)
+    // WooCommerce Store API اکثر قیمتیں cents (پیسوں) میں بھیجتا ہے (e.g. 1000 = $10.00)
+    // اور کبھی String تو کبھی Int میں بھیجتا ہے۔
+    String unitPrice = '0.00';
+    String total = '0.00';
 
-    if (json['prices'] != null) {
-      unitPrice = (int.parse(json['prices']['price'] ?? '0') / 100).toString();
-      total = (int.parse(json['totals']['line_subtotal'] ?? '0') / 100).toString();
+    try {
+      // Unit Price
+      if (json['prices'] != null) {
+        // پہلے String میں لیں، پھر ڈبل بنائیں
+        var priceRaw = json['prices']['price']?.toString() ?? '0';
+        // 100 سے تقسیم کریں تاکہ Cents سے Dollars/Rupees بن جائیں
+        unitPrice = (double.parse(priceRaw) / 100).toStringAsFixed(2);
+      }
+
+      // Line Subtotal
+      if (json['totals'] != null) {
+        var totalRaw = json['totals']['line_subtotal']?.toString() ?? '0';
+        total = (double.parse(totalRaw) / 100).toStringAsFixed(2);
+      }
+    } catch (e) {
+      // اگر کوئی گڑبڑ ہو تو کنسول میں پرنٹ کریں، لیکن ایپ کریش نہ ہونے دیں
+      print("⚠️ Error parsing cart prices: $e");
+    }
+
+    // 3. Variation Parsing
+    // کبھی یہ خالی List [] ہوتی ہے اور کبھی Map {}
+    Map<String, dynamic> variationData = {};
+    if (json['variation'] != null) {
+      if (json['variation'] is Map) {
+        variationData = json['variation'] as Map<String, dynamic>;
+      } else if (json['variation'] is List) {
+        // اگر خالی لسٹ ہو تو اسے ignore کریں
+        variationData = {};
+      }
     }
 
     return CartItemModel(
-      key: json['key'] ?? '',
+      key: json['key']?.toString() ?? '',
       productId: json['id'] ?? 0,
-      name: json['name'] ?? '',
+      name: json['name']?.toString() ?? '',
       price: unitPrice,
       quantity: json['quantity'] ?? 1,
       imageUrl: img,
-      variation: json['variation'] ?? {},
+      variation: variationData,
       lineSubtotal: total,
     );
   }

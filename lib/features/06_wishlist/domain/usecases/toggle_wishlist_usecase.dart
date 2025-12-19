@@ -1,3 +1,4 @@
+import '../../../03_product_and_category/domain/entities/product.dart'; // Import Product
 import '../repositories/wishlist_repository.dart';
 
 class ToggleWishlist {
@@ -5,7 +6,8 @@ class ToggleWishlist {
 
   ToggleWishlist({required this.repository});
 
-  Future<bool> call(int productId) async {
-    return await repository.toggleWishlist(productId);
+  // 👇 تبدیلی یہاں ہے
+  Future<bool> call(Product product) async {
+    return await repository.toggleWishlist(product);
   }
 }

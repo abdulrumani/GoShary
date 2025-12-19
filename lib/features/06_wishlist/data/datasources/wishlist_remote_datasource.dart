@@ -1,92 +1,75 @@
-import 'package:dio/dio.dart';
+import 'dart:convert'; // JSON کے لیے
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/api/api_client.dart';
-import '../../../../core/constants/api_endpoints.dart';
+import '../../../../core/services/di_container.dart';
 import '../../../03_product_and_category/data/models/product_model.dart';
 
 abstract class WishlistRemoteDataSource {
   Future<List<ProductModel>> getWishlist();
-  Future<bool> toggleWishlist(int productId); // Add or Remove
+  Future<bool> toggleWishlist(ProductModel product); // نوٹ: اب ہم پورا پروڈکٹ بھیجیں گے
 }
 
 class WishlistRemoteDataSourceImpl implements WishlistRemoteDataSource {
   final ApiClient apiClient;
-
   WishlistRemoteDataSourceImpl({required this.apiClient});
 
-  // YITH Wishlist API Endpoints (یہ آپ کے پلگ ان کے مطابق مختلف ہو سکتے ہیں)
-  // مثال: 'yith/wishlist/v1'
-  final String _wishlistBaseUrl = 'yith/wishlist/v1';
+  final String _key = 'local_wishlist_data';
 
-  /// ❤️ 1. وش لسٹ حاصل کرنا
   @override
   Future<List<ProductModel>> getWishlist() async {
-    try {
-      // 1. وش لسٹ کے آئٹمز لائیں
-      final response = await apiClient.get(
-          '$_wishlistBaseUrl/wishlist/products',
-          queryParameters: {
-            'consumer_key': ApiEndpoints.consumerKey,
-            'consumer_secret': ApiEndpoints.consumerSecret,
-          }
-      );
+    final prefs = sl<SharedPreferences>();
+    final jsonString = prefs.getString(_key);
 
-      // نوٹ: YITH کبھی کبھی صرف IDs دیتا ہے اور کبھی پورا آبجیکٹ۔
-      // ہم فرض کر رہے ہیں کہ یہ پروڈکٹ آبجیکٹس کی لسٹ دے رہا ہے۔
-      // اگر یہ صرف IDs دیتا ہے، تو ہمیں ان IDs کو لے کر دوبارہ Product API کال کرنی ہوگی۔
-
-      // فی الحال ہم اسے ProductModel میں پارس کر رہے ہیں
-      return (response.data as List)
-          .map((e) => ProductModel.fromJson(e))
-          .toList();
-
-    } catch (e) {
-      // اگر API فیل ہو جائے (یا پلگ ان نہ ہو)، تو فی الحال خالی لسٹ بھیجیں
-      return [];
+    if (jsonString != null) {
+      final List decoded = json.decode(jsonString);
+      return decoded.map((e) => ProductModel.fromJson(e)).toList();
     }
+    return [];
   }
 
-  /// 🔄 2. وش لسٹ میں شامل کرنا / ہٹانا (Toggle)
   @override
-  Future<bool> toggleWishlist(int productId) async {
-    try {
-      // یہ چیک کرنے کے لیے کہ پروڈکٹ پہلے سے ہے یا نہیں، ہمیں پہلے لسٹ لانی پڑ سکتی ہے
-      // یا API کا 'toggle' اینڈ پوائنٹ استعمال کریں۔
+  // ⚠️ نوٹ: میں نے پیرامیٹر کو 'int productId' سے 'ProductModel product' میں بدلا ہے
+  // کیونکہ لوکل اسٹوریج کے لیے ہمیں پورا ڈیٹا محفوظ کرنا ہے۔
+  Future<bool> toggleWishlist(ProductModel product) async {
+    final prefs = sl<SharedPreferences>();
+    List<ProductModel> currentList = await getWishlist();
 
-      // YITH Add Endpoint:
-      final response = await apiClient.post(
-        '$_wishlistBaseUrl/wishlist/add',
-        queryParameters: {
-          'product_id': productId,
-          'consumer_key': ApiEndpoints.consumerKey,
-          'consumer_secret': ApiEndpoints.consumerSecret,
-        },
-      );
+    // چیک کریں کہ پہلے سے موجود ہے یا نہیں
+    final index = currentList.indexWhere((item) => item.id == product.id);
 
-      // اگر سٹیٹس "added" ہے تو true واپس کریں
-      if (response.data['status'] == 'added' || response.data['result'] == 'true') {
-        return true;
-      }
-      // اگر "exists" یا "removed" ہے
-      else {
-        // اگر پہلے سے موجود تھا، تو اسے ہٹانے کی کوشش کریں
-        await _removeFromWishlist(productId);
-        return false; // اب لسٹ میں نہیں ہے
-      }
-    } catch (e) {
-      // اگر API نہ چلے تو ہم اسے عارضی طور پر true مان لیتے ہیں تاکہ UI اپڈیٹ ہو جائے
-      // (اصلی ایپ میں یہاں ایرر ہینڈلنگ ہونی چاہیے)
-      return true;
+    if (index >= 0) {
+      // اگر موجود ہے تو ہٹا دیں
+      currentList.removeAt(index);
+    } else {
+      // اگر نہیں ہے تو شامل کریں
+      currentList.add(product);
     }
+
+    // واپس سیو کریں
+    // ہمیں ماڈل کو JSON میں بدلنا ہوگا (ProductModel میں toJson ہونا ضروری ہے)
+    // چونکہ ہم نے ProductModel میں toJson نہیں بنایا تھا، ہمیں وہ بھی شامل کرنا پڑے گا۔
+    // فی الحال ہم ایک جگاڑ (workaround) کرتے ہیں: صرف آئی ڈی محفوظ نہیں کر سکتے کیونکہ UI کو ڈیٹا چاہیے۔
+
+    // ایک سادہ حل:
+    final encoded = json.encode(currentList.map((e) => _productToJson(e)).toList());
+    await prefs.setString(_key, encoded);
+
+    return true;
   }
 
-  Future<void> _removeFromWishlist(int productId) async {
-    await apiClient.delete(
-      '$_wishlistBaseUrl/wishlist/remove',
-      queryParameters: {
-        'product_id': productId,
-        'consumer_key': ApiEndpoints.consumerKey,
-        'consumer_secret': ApiEndpoints.consumerSecret,
-      },
-    );
+  // Helper to convert ProductModel back to JSON
+  Map<String, dynamic> _productToJson(ProductModel p) {
+    return {
+      'id': p.id,
+      'name': p.name,
+      'price': p.price,
+      'regular_price': p.regularPrice,
+      'sale_price': p.salePrice,
+      'on_sale': p.onSale,
+      'average_rating': p.rating,
+      'rating_count': p.reviewCount,
+      'images': [{'src': p.imageUrl}], // Simplified
+      'description': p.description,
+    };
   }
 }

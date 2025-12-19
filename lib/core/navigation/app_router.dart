@@ -162,9 +162,9 @@ class AppRouter {
       ),
       GoRoute(
         path: '/product-list',
-        name: 'product_list', // Note: Add this to RouteNames if not present
-        parentNavigatorKey: _rootNavigatorKey,
+        name: RouteNames.productList, // یقینی بنائیں کہ route_names.dart میں یہ نام ہو
         builder: (context, state) {
+          // ڈیٹا وصول کریں (Category ID اور Name)
           final extra = state.extra as Map<String, dynamic>;
           return ProductListScreen(
             categoryId: extra['id'],

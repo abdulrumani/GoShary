@@ -1,4 +1,5 @@
 import '../../../../features/03_product_and_category/domain/entities/product.dart';
+import '../../../../features/03_product_and_category/data/models/product_model.dart'; // Model Import کریں
 import '../../domain/repositories/wishlist_repository.dart';
 import '../datasources/wishlist_remote_datasource.dart';
 
@@ -10,21 +11,35 @@ class WishlistRepositoryImpl implements WishlistRepository {
   @override
   Future<List<Product>> getWishlist() async {
     try {
-      // ریموٹ ڈیٹا سورس ProductModel کی لسٹ دیتا ہے
-      // چونکہ ProductModel، Product کو extend کرتا ہے، یہ سیدھا return ہو سکتا ہے
       return await remoteDataSource.getWishlist();
     } catch (e) {
-      // اگر کوئی ایرر آئے (جیسے نیٹ ورک ایشو)، تو فی الحال خالی لسٹ واپس کریں
       return [];
     }
   }
 
   @override
-  Future<bool> toggleWishlist(int productId) async {
+  Future<bool> toggleWishlist(Product product) async {
     try {
-      return await remoteDataSource.toggleWishlist(productId);
+      // 👇 اہم: Entity کو Model میں تبدیل کرنا ضروری ہے تاکہ ڈیٹا سورس اسے قبول کرے
+      final productModel = ProductModel(
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        shortDescription: product.shortDescription,
+        price: product.price,
+        regularPrice: product.regularPrice,
+        salePrice: product.salePrice,
+        onSale: product.onSale,
+        imageUrl: product.imageUrl,
+        galleryImages: product.galleryImages,
+        rating: product.rating,
+        reviewCount: product.reviewCount,
+        stockStatus: product.stockStatus,
+        attributes: product.attributes,
+      );
+
+      return await remoteDataSource.toggleWishlist(productModel);
     } catch (e) {
-      // اگر ایکشن فیل ہو جائے تو فرض کریں کہ کچھ نہیں ہوا (false)
       return false;
     }
   }

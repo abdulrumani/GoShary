@@ -7,6 +7,7 @@ import '../api/api_client.dart';
 import '../api/interceptors/auth_interceptor.dart';
 import '../api/interceptors/logging_interceptor.dart';
 import 'storage_service.dart';
+import 'notification_service.dart'; // ✅ New Import
 
 // --- Feature 00: Splash ---
 import '../../features/00_splash/data/datasources/splash_remote_datasource.dart';
@@ -106,6 +107,9 @@ Future<void> setupServiceLocator() async {
   sl.registerLazySingleton(() => AuthInterceptor(sharedPreferences: sl()));
   sl.registerLazySingleton(() => LoggingInterceptor());
   sl.registerLazySingleton(() => ApiClient(sharedPreferences: sl()));
+
+  // Notification Service (Singleton)
+  sl.registerLazySingleton(() => NotificationService());
 
   // ================================================================
   // 3. Features

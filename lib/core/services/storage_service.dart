@@ -11,7 +11,7 @@ class StorageService {
   // 1. Auth & User Data (لاگ ان اور یوزر ڈیٹا)
   // ================================================================
 
-  /// یوزر کا ٹوکن محفوظ کریں (Login کے بعد)
+  /// یوزر کا ٹوکن محفوظ کریں
   Future<bool> saveUserToken(String token) async {
     return await _prefs.setString(StorageKeys.userToken, token);
   }
@@ -26,57 +26,70 @@ class StorageService {
     return await _prefs.setString(StorageKeys.userId, id);
   }
 
+  /// یوزر کا ID حاصل کریں
   String? getUserId() {
     return _prefs.getString(StorageKeys.userId);
   }
 
-  /// یوزر کا نام اور ای میل محفوظ کریں (پروفائل کے لیے)
+  /// یوزر کا نام اور ای میل محفوظ کریں
   Future<void> saveUserInfo(String name, String email) async {
     await _prefs.setString(StorageKeys.userName, name);
     await _prefs.setString(StorageKeys.userEmail, email);
   }
 
-  /// کیا یوزر لاگ ان ہے؟ (اگر ٹوکن موجود ہے تو ہاں)
+  /// کیا یوزر لاگ ان ہے؟
   bool get hasToken => _prefs.containsKey(StorageKeys.userToken);
 
   // ================================================================
-  // 2. App Settings (زبان اور تھیم)
+  // 2. Cart Token (WooCommerce Store API کے لیے) ✅ NEW
   // ================================================================
 
-  /// ایپ کی زبان محفوظ کریں (ar یا en)
+  /// کارٹ کا سیشن ٹوکن محفوظ کریں (تاکہ کارٹ خالی نہ ہو)
+  Future<void> saveCartToken(String token) async {
+    await _prefs.setString(StorageKeys.cartToken, token);
+  }
+
+  /// کارٹ کا ٹوکن حاصل کریں
+  String? getCartToken() {
+    return _prefs.getString(StorageKeys.cartToken);
+  }
+
+  // ================================================================
+  // 3. App Settings (زبان)
+  // ================================================================
+
+  /// ایپ کی زبان محفوظ کریں
   Future<bool> saveAppLanguage(String languageCode) async {
     return await _prefs.setString(StorageKeys.appLang, languageCode);
   }
 
-  /// ایپ کی موجودہ زبان حاصل کریں (ڈیفالٹ 'en')
+  /// ایپ کی موجودہ زبان حاصل کریں
   String getAppLanguage() {
     return _prefs.getString(StorageKeys.appLang) ?? 'en';
   }
 
   // ================================================================
-  // 3. Onboarding (کیا ایپ پہلی بار کھلی ہے؟)
+  // 4. Onboarding (کیا ایپ پہلی بار کھلی ہے؟)
   // ================================================================
 
-  /// چیک کریں کہ کیا یہ پہلی بار ہے؟
   bool isFirstTimeOpen() {
     return _prefs.getBool(StorageKeys.isFirstTime) ?? true;
   }
 
-  /// سیٹ کریں کہ اب پہلی بار نہیں رہی (Onboarding دکھانے کے بعد)
   Future<bool> setFirstTimeChecked() async {
     return await _prefs.setBool(StorageKeys.isFirstTime, false);
   }
 
   // ================================================================
-  // 4. Logout (ڈیٹا صاف کرنا)
+  // 5. Logout (ڈیٹا صاف کرنا)
   // ================================================================
 
-  /// جب یوزر لاگ آؤٹ کرے تو صرف یوزر کا ڈیٹا ہٹائیں (زبان وغیرہ رہنے دیں)
+  /// لاگ آؤٹ پر یوزر کا ڈیٹا صاف کریں
   Future<void> logout() async {
     await _prefs.remove(StorageKeys.userToken);
     await _prefs.remove(StorageKeys.userId);
     await _prefs.remove(StorageKeys.userName);
     await _prefs.remove(StorageKeys.userEmail);
-    // نوٹ: ہم appLang یا isFirstTime کو ریموو نہیں کر رہے
+    // نوٹ: ہم Cart Token یا Language کو صاف نہیں کر رہے تاکہ یوزر کا تجربہ خراب نہ ہو
   }
 }
