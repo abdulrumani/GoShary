@@ -50,7 +50,7 @@ class HomeProductCarousel extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 260, // Product Card + Shadow
+          height: 260,
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             scrollDirection: Axis.horizontal,
@@ -59,7 +59,11 @@ class HomeProductCarousel extends StatelessWidget {
             itemBuilder: (context, index) {
               final product = products[index];
               return ProductCardWidget(
-                productId: product.id,
+                // ✅ صرف 'product' بھیجیں، 'productId' کی ضرورت نہیں
+                product: product,
+
+                // ❌ یہ لائن مٹا دی گئی ہے: productId: product.id,
+
                 title: product.name,
                 imageUrl: product.imageUrl,
                 price: double.tryParse(product.price) ?? 0.0,
@@ -72,7 +76,6 @@ class HomeProductCarousel extends StatelessWidget {
                     pathParameters: {'id': product.id.toString()},
                   );
                 },
-                // onFavoriteToggle removed because ProductCardWidget handles it internally via Bloc
                 onAddToCart: () {
                   // Add to Cart Logic
                 },

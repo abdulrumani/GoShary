@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart'; // Bloc import for context.read
 import 'package:go_router/go_router.dart';
 
 // Core Imports
 import '../../../../../core/services/di_container.dart';
+import '../../../../../core/config/app_colors.dart'; // Colors import
 import '../../../../../core/widgets/product_card_widget.dart';
 import '../../../../../core/widgets/loading_indicator.dart';
 import '../../../../../core/navigation/route_names.dart';
 
 // Feature Imports
-import 'package:goshary_app/features/03_product_and_category/domain/entities/product.dart';
-import 'package:goshary_app/features/03_product_and_category/data/datasources/product_remote_datasource.dart'; // یا Repository استعمال کریں
+import '../../../domain/entities/product.dart';
+import '../../../data/datasources/product_remote_datasource.dart';
+import '../../../../04_cart/presentation/cubit/cart_cubit.dart'; // For Add to Cart
 
 class ProductListScreen extends StatefulWidget {
   final int categoryId;
@@ -31,8 +34,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
   @override
   void initState() {
     super.initState();
-    // ہم یہاں existing datasource فنکشن استعمال کر رہے ہیں
-    // یہ فنکشن API سے اس کیٹیگری کی پروڈکٹس لائے گا
+    // API سے پروڈکٹس لائیں
     _productsFuture = sl<ProductRemoteDataSource>().getRelatedProducts(widget.categoryId.toString());
   }
 
@@ -67,7 +69,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
             padding: const EdgeInsets.all(16),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              childAspectRatio: 0.65, // کارڈ کی اونچائی/چوڑائی
+              childAspectRatio: 0.65,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
             ),
@@ -75,7 +77,11 @@ class _ProductListScreenState extends State<ProductListScreen> {
             itemBuilder: (context, index) {
               final product = products[index];
               return ProductCardWidget(
-                productId: product.id,
+                // ✅ 1. نیا طریقہ: پورا پروڈکٹ پاس کریں
+                product: product,
+
+                // ❌ 2. پرانا طریقہ ختم کریں (productId لائن ہٹا دیں)
+
                 title: product.name,
                 imageUrl: product.imageUrl,
                 price: double.tryParse(product.price) ?? 0.0,
@@ -85,14 +91,21 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 rating: product.rating,
                 reviewCount: product.reviewCount,
                 onTap: () {
-                  // پروڈکٹ ڈیٹیل پر جائیں
                   context.pushNamed(
                       RouteNames.productDetails,
                       pathParameters: {'id': product.id.toString()}
                   );
                 },
                 onAddToCart: () {
-                  // Add to Cart Logic (یہاں CartCubit کال کر سکتے ہیں)
+                  // Add to Cart
+                  context.read<CartCubit>().addToCart(product.id, 1);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("${product.name} added to cart"),
+                      backgroundColor: AppColors.success,
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
                 },
               );
             },

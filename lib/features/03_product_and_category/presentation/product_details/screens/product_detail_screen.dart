@@ -125,7 +125,7 @@ class _ProductDetailViewState extends State<_ProductDetailView> {
                       ),
                       onPressed: () {
                         // 👇 وش لسٹ لاجک
-                        context.read<WishlistCubit>().toggleWishlist(product.id);
+                        context.read<WishlistCubit>().toggleWishlist(product);
 
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text("Added to Wishlist"), backgroundColor: AppColors.success),

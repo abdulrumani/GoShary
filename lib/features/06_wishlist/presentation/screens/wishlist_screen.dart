@@ -9,7 +9,7 @@ import '../../../../core/navigation/route_names.dart';
 import '../../../../core/widgets/loading_indicator.dart';
 
 // Feature Imports
-import '../../../04_cart/presentation/cubit/cart_cubit.dart'; // To add items to cart
+import '../../../04_cart/presentation/cubit/cart_cubit.dart';
 import '../cubit/wishlist_cubit.dart';
 import '../cubit/wishlist_state.dart';
 import '../widgets/wishlist_item_card.dart';
@@ -19,10 +19,6 @@ class WishlistScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // WishlistCubit is already global in app.dart, so no provider needed here.
-    // Optional: Refresh on open
-    // context.read<WishlistCubit>().loadWishlist();
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -30,9 +26,6 @@ class WishlistScreen extends StatelessWidget {
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          // Cart Icon with Badge could go here
-        ],
       ),
       body: BlocBuilder<WishlistCubit, WishlistState>(
         builder: (context, state) {
@@ -61,13 +54,13 @@ class WishlistScreen extends StatelessWidget {
                   ),
                 ),
 
-                // Product Grid [cite: 346-402]
+                // Product Grid
                 Expanded(
                   child: GridView.builder(
                     padding: const EdgeInsets.all(16),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2, // 2 کالم
-                      childAspectRatio: 0.65, // کارڈ کی اونچائی/چوڑائی کا تناسب
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.65,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
                     ),
@@ -77,18 +70,18 @@ class WishlistScreen extends StatelessWidget {
                       return WishlistItemCard(
                         product: product,
                         onTap: () {
-                          // Details Screen پر جائیں
                           context.pushNamed(
                             RouteNames.productDetails,
                             pathParameters: {'id': product.id.toString()},
                           );
                         },
                         onRemove: () {
-                          // Wishlist سے ہٹائیں
-                          context.read<WishlistCubit>().toggleWishlist(product.id);
+                          // ❌ غلط: context.read<WishlistCubit>().toggleWishlist(product.id);
+                          // ✅ صحیح: اب ہمیں پورا پروڈکٹ بھیجنا ہے
+                          context.read<WishlistCubit>().toggleWishlist(product);
                         },
                         onAddToCart: () {
-                          // Cart میں شامل کریں
+                          // Cart میں ID ہی استعمال ہوتی ہے، یہ ٹھیک ہے
                           context.read<CartCubit>().addToCart(product.id, 1);
 
                           ScaffoldMessenger.of(context).showSnackBar(

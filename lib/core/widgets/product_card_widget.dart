@@ -1,17 +1,19 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart'; // Bloc شامل کیا
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../config/app_colors.dart';
 import '../utils/formatters.dart';
 import 'loading_indicator.dart';
 
-// Wishlist Cubit Import (تاکہ ہم اسٹیٹ چیک کر سکیں)
+// 👇 Product Entity Import کریں
+import '../../features/03_product_and_category/domain/entities/product.dart';
 import '../../features/06_wishlist/presentation/cubit/wishlist_cubit.dart';
 import '../../features/06_wishlist/presentation/cubit/wishlist_state.dart';
 
 class ProductCardWidget extends StatelessWidget {
-  final int productId; // ✅ نیا: ID ضروری ہے تاکہ ہم وش لسٹ چیک کر سکیں
+  final Product product; // ✅ تبدیلی: اب ہمیں پورا پروڈکٹ چاہیے
+  // باقی چیزیں ویسے ہی رہنے دیں تاکہ UI نہ ٹوٹے
   final String title;
   final String imageUrl;
   final double price;
@@ -23,7 +25,7 @@ class ProductCardWidget extends StatelessWidget {
 
   const ProductCardWidget({
     super.key,
-    required this.productId, // ✅ یہاں شامل کیا
+    required this.product, // ✅ یہاں شامل کریں
     required this.title,
     required this.imageUrl,
     required this.price,
@@ -36,7 +38,6 @@ class ProductCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // سیل کا حساب
     int? discountPercent;
     if (regularPrice != null && regularPrice! > price) {
       discountPercent = ((regularPrice! - price) / regularPrice! * 100).round();
@@ -60,65 +61,41 @@ class ProductCardWidget extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- 1. Image & Badges Section ---
+            // Image Section
             Stack(
               children: [
-                // Product Image
                 ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                  ),
+                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
                   child: SizedBox(
                     height: 140,
                     width: double.infinity,
                     child: CachedNetworkImage(
                       imageUrl: imageUrl,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => const Center(
-                        child: LoadingIndicator(size: 20),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: Colors.grey[200],
-                        child: const Icon(Icons.image_not_supported, color: Colors.grey),
-                      ),
+                      placeholder: (context, url) => const Center(child: LoadingIndicator(size: 20)),
+                      errorWidget: (context, url, error) => Container(color: Colors.grey[200], child: const Icon(Icons.image_not_supported)),
                     ),
                   ),
                 ),
-
-                // Discount Badge
                 if (discountPercent != null)
                   Positioned(
-                    top: 8,
-                    left: 8,
+                    top: 8, left: 8,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.error,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '$discountPercent% OFF',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      decoration: BoxDecoration(color: AppColors.error, borderRadius: BorderRadius.circular(8)),
+                      child: Text('$discountPercent% OFF', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
                     ),
                   ),
 
-                // Wishlist Button (BlocBuilder کے ساتھ)
+                // ❤️ Wishlist Button Logic
                 Positioned(
-                  top: 4,
-                  right: 4,
+                  top: 4, right: 4,
                   child: BlocBuilder<WishlistCubit, WishlistState>(
                     builder: (context, state) {
                       bool isWishlisted = false;
-
-                      // چیک کریں کہ کیا یہ پروڈکٹ لسٹ میں موجود ہے؟
                       if (state is WishlistLoaded) {
-                        isWishlisted = state.wishlist.any((item) => item.id == productId);
+                        // چیک کریں کہ کیا پروڈکٹ لسٹ میں ہے؟
+                        isWishlisted = state.wishlist.any((item) => item.id == product.id);
                       }
 
                       return IconButton(
@@ -128,8 +105,8 @@ class ProductCardWidget extends StatelessWidget {
                           size: 20,
                         ),
                         onPressed: () {
-                          // Wishlist Toggle Action
-                          context.read<WishlistCubit>().toggleWishlist(productId);
+                          // ✅ اب یہاں ہم پورا پروڈکٹ بھیج رہے ہیں
+                          context.read<WishlistCubit>().toggleWishlist(product);
 
                           ScaffoldMessenger.of(context).hideCurrentSnackBar();
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -147,81 +124,24 @@ class ProductCardWidget extends StatelessWidget {
               ],
             ),
 
-            // --- 2. Details Section ---
+            // Details Section
             Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Rating
-                  Row(
-                    children: [
-                      const Icon(Icons.star, color: AppColors.warning, size: 14),
-                      const SizedBox(width: 4),
-                      Text(
-                        '$rating ($reviewCount)',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
+                  Row(children: [const Icon(Icons.star, color: AppColors.warning, size: 14), const SizedBox(width: 4), Text('$rating ($reviewCount)', style: Theme.of(context).textTheme.bodySmall)]),
                   const SizedBox(height: 6),
-
-                  // Title
-                  Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      height: 1.2,
-                    ),
-                  ),
+                  Text(title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                   const SizedBox(height: 8),
-
-                  // Price Row
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (regularPrice != null && regularPrice! > price)
-                            Text(
-                              AppFormatters.formatPrice(regularPrice),
-                              style: const TextStyle(
-                                decoration: TextDecoration.lineThrough,
-                                color: AppColors.textSecondary,
-                                fontSize: 10,
-                              ),
-                            ),
-                          Text(
-                            AppFormatters.formatPrice(price),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      // Add to Cart Button
+                      Text(AppFormatters.formatPrice(price), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.primary)),
                       InkWell(
                         onTap: onAddToCart,
                         borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(
-                            Icons.add_shopping_cart,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                        ),
+                        child: Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.add_shopping_cart, color: Colors.white, size: 18)),
                       ),
                     ],
                   ),
