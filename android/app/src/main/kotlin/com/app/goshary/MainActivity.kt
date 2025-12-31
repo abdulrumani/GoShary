@@ -1,4 +1,4 @@
-package com.goshary.goshary
+package com.app.goshary
 
 import io.flutter.embedding.android.FlutterActivity
 

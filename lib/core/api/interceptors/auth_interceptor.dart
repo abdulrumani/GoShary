@@ -1,25 +1,28 @@
 import 'package:dio/dio.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
-// آپ کی StorageKeys فائل کا لنک
-import '../../constants/storage_keys.dart';
+import '../../services/di_container.dart';
+import '../../services/storage_service.dart';
 
 class AuthInterceptor extends Interceptor {
-  final SharedPreferences sharedPreferences;
-
-  AuthInterceptor({required this.sharedPreferences});
+  // ✅ ہمیں Constructor کی ضرورت نہیں کیونکہ ہم sl() استعمال کر رہے ہیں
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    // 1. شیئرڈ پریفرینسز سے ٹوکن حاصل کریں
-    final String? token = sharedPreferences.getString(StorageKeys.userToken);
+    // 1. StorageService حاصل کریں
+    final storage = sl<StorageService>();
 
-    // 2. اگر ٹوکن موجود ہے اور خالی نہیں ہے، تو ہیڈر میں شامل کریں
-    if (token != null && token.isNotEmpty) {
+    // 2. ٹوکن حاصل کریں
+    final token = storage.getUserToken();
+
+    // ✅ اہم فکس:
+    // ٹوکن صرف تب بھیجیں اگر وہ موجود ہو اور اس میں "mock" کا لفظ نہ ہو
+    // یہ 'mock_token_123' اور 'mock_social_token' دونوں کو روک دے گا
+    if (token != null &&
+        token.isNotEmpty &&
+        !token.contains('mock')) {
       options.headers['Authorization'] = 'Bearer $token';
     }
 
-    // 3. ریکویسٹ کو آگے بڑھائیں
-    super.onRequest(options, handler);
+    // ریکویسٹ کو آگے بڑھائیں
+    handler.next(options);
   }
 }

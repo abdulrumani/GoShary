@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "157578138488",
+    "project_id": "goshary",
+    "storage_bucket": "goshary.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:157578138488:android:8b3a84f9b31fcdaf772e8d",
+        "android_client_info": {
+          "package_name": "com.app.goshary"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBkKWhiNJxeu0UWQYzc62TEKbv08hqsIuM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

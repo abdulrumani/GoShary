@@ -11,6 +11,10 @@ import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/custom_textfield.dart';
 import '../../../../core/widgets/loading_indicator.dart';
 
+// 👇 یہ دو نئی فائلیں امپورٹ کریں (Auth Check کے لیے)
+import '../../../../core/services/di_container.dart';
+import '../../../../core/services/storage_service.dart';
+
 // Feature Imports
 import '../cubit/cart_cubit.dart';
 import '../cubit/cart_state.dart';
@@ -21,10 +25,6 @@ class CartScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // CartCubit پہلے سے global (app.dart میں) ہے، اس لیے دوبارہ پرووائیڈ کرنے کی ضرورت نہیں
-    // لیکن اگر ہم چاہیں کہ ہر بار اسکرین کھلنے پر ڈیٹا ریفریش ہو، تو ہم loadCart کال کر سکتے ہیں
-    // context.read<CartCubit>().loadCart();
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -33,7 +33,6 @@ class CartScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
-          // Wishlist Icon (Optional)
           IconButton(
             icon: const Icon(Icons.favorite_border, color: Colors.black),
             onPressed: () => context.pushNamed(RouteNames.wishlist),
@@ -66,7 +65,7 @@ class CartScreen extends StatelessWidget {
 
             return Column(
               children: [
-                // 1. Cart Items List [cite: 189-207]
+                // 1. Cart Items List
                 Expanded(
                   child: ListView.separated(
                     padding: const EdgeInsets.all(20),
@@ -92,7 +91,7 @@ class CartScreen extends StatelessWidget {
                   ),
                 ),
 
-                // 2. Coupon & Order Summary [cite: 212-221]
+                // 2. Coupon & Order Summary
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
@@ -121,7 +120,7 @@ class CartScreen extends StatelessWidget {
                           CustomButton(
                             text: "Apply",
                             width: 80,
-                            height: 50, // Match TextField height roughly
+                            height: 50,
                             onPressed: () {
                               // Apply Coupon Logic
                             },
@@ -141,11 +140,28 @@ class CartScreen extends StatelessWidget {
 
                       const SizedBox(height: 24),
 
-                      // Checkout Button [cite: 222]
+                      // Checkout Button with Auth Check
                       CustomButton(
                         text: "Proceed to Checkout",
                         onPressed: () {
-                          context.pushNamed(RouteNames.checkout);
+                          // 👇 یہاں لاگ ان چیک لگا دیا گیا ہے
+                          final storage = sl<StorageService>();
+
+                          if (storage.hasToken) {
+                            // ✅ اگر لاگ ان ہے تو چیک آؤٹ پر جائیں
+                            context.pushNamed(RouteNames.checkout);
+                          } else {
+                            // ❌ اگر لاگ ان نہیں ہے تو لاگ ان اسکرین پر بھیجیں
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Please login to verify your order."),
+                                backgroundColor: AppColors.error,
+                              ),
+                            );
+
+                            // لاگ ان اسکرین پر جائیں
+                            context.pushNamed(RouteNames.login);
+                          }
                         },
                       ),
                     ],

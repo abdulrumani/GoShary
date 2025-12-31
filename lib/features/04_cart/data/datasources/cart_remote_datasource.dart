@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../../core/api/api_client.dart';
-import '../../../../core/services/di_container.dart'; // StorageService تک رسائی کے لیے
+import '../../../../core/services/di_container.dart';
 import '../../../../core/services/storage_service.dart';
 import '../models/cart_item_model.dart';
 
@@ -19,32 +19,47 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
 
   final String _cartUrl = 'wc/store/v1/cart';
 
-  // 👇 ہیڈرز حاصل کرنے کا فنکشن
+  // --- Helpers ---
+
   Map<String, dynamic> _getHeaders() {
     final storage = sl<StorageService>();
+    final headers = <String, String>{};
+
+    // Cart Token
     final token = storage.getCartToken();
-    if (token != null) {
-      return {'Cart-Token': token}; // اگر ٹوکن موجود ہے تو بھیجیں
-    }
-    return {};
+    if (token != null) headers['Cart-Token'] = token;
+
+    // Nonce (سیکیورٹی پاس)
+    final nonce = storage.getWcNonce();
+    if (nonce != null) headers['X-WC-Store-API-Nonce'] = nonce;
+
+    return headers;
   }
 
-  // 👇 ریسپانس سے ٹوکن محفوظ کرنے کا فنکشن
-  void _saveTokenFromResponse(Response response) {
-    // WooCommerce ہیڈر میں 'cart-token' بھیجتا ہے
-    final token = response.headers.value('cart-token');
-    if (token != null) {
-      sl<StorageService>().saveCartToken(token);
+  void _saveHeadersFromResponse(Response response) {
+    final storage = sl<StorageService>();
+
+    // Save Token
+    if (response.headers.value('cart-token') != null) {
+      storage.saveCartToken(response.headers.value('cart-token')!);
+    }
+    // Save Nonce
+    if (response.headers.value('nonce') != null) {
+      storage.saveWcNonce(response.headers.value('nonce')!);
+      print("✅ Nonce Updated: ${response.headers.value('nonce')}");
     }
   }
+
+  // --- Methods ---
 
   @override
   Future<List<CartItemModel>> getCart() async {
     try {
       final response = await apiClient.get(
         _cartUrl,
-        options: Options(headers: _getHeaders()), // ہیڈر بھیجیں
+        options: Options(headers: _getHeaders()),
       );
+      _saveHeadersFromResponse(response);
       return _parseCartItems(response.data);
     } catch (e) {
       print("Get Cart Error: $e");
@@ -54,48 +69,58 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
 
   @override
   Future<List<CartItemModel>> addToCart({required int productId, required int quantity}) async {
+    // 1. پہلی کوشش (First Attempt)
     try {
-      final response = await apiClient.post(
-        '$_cartUrl/add-item',
-        data: {'id': productId, 'quantity': quantity},
-        options: Options(headers: _getHeaders()), // ہیڈر بھیجیں
-      );
-
-      _saveTokenFromResponse(response); // ✅ نیا ٹوکن محفوظ کریں
-
-      return _parseCartItems(response.data);
+      return await _performAddToCart(productId, quantity);
     } catch (e) {
-      print("Add to Cart Error: $e");
+      // 2. اگر 401 ایرر آئے (یعنی Nonce غائب یا پرانا ہے)
+      if (e is DioException && e.response?.statusCode == 401) {
+        print("⚠️ Missing Nonce (401). Fetching new session...");
+
+        // 3. کارٹ کو ریفریش کریں تاکہ نیا Nonce ملے
+        // (یہ Get Request نیا Nonce لائے گی اور اسے save کر لے گی)
+        await getCart();
+
+        // 4. دوبارہ کوشش کریں (Retry)
+        print("🔄 Retrying Add to Cart...");
+        return await _performAddToCart(productId, quantity);
+      }
+      // اگر کوئی اور ایرر ہو تو اسے آگے پھینک دیں
       rethrow;
     }
+  }
+
+  // پرائیویٹ فنکشن جو اصل API کال کرتا ہے
+  Future<List<CartItemModel>> _performAddToCart(int productId, int quantity) async {
+    final response = await apiClient.post(
+      '$_cartUrl/add-item',
+      data: {'id': productId, 'quantity': quantity},
+      options: Options(headers: _getHeaders()),
+    );
+    _saveHeadersFromResponse(response);
+    return _parseCartItems(response.data);
   }
 
   @override
   Future<List<CartItemModel>> updateCartItem({required String key, required int quantity}) async {
-    try {
-      final response = await apiClient.post(
-        '$_cartUrl/update-item',
-        data: {'key': key, 'quantity': quantity},
-        options: Options(headers: _getHeaders()),
-      );
-      return _parseCartItems(response.data);
-    } catch (e) {
-      rethrow;
-    }
+    final response = await apiClient.post(
+      '$_cartUrl/update-item',
+      data: {'key': key, 'quantity': quantity},
+      options: Options(headers: _getHeaders()),
+    );
+    _saveHeadersFromResponse(response);
+    return _parseCartItems(response.data);
   }
 
   @override
   Future<List<CartItemModel>> removeCartItem({required String key}) async {
-    try {
-      final response = await apiClient.post(
-        '$_cartUrl/remove-item',
-        data: {'key': key},
-        options: Options(headers: _getHeaders()),
-      );
-      return _parseCartItems(response.data);
-    } catch (e) {
-      rethrow;
-    }
+    final response = await apiClient.post(
+      '$_cartUrl/remove-item',
+      data: {'key': key},
+      options: Options(headers: _getHeaders()),
+    );
+    _saveHeadersFromResponse(response);
+    return _parseCartItems(response.data);
   }
 
   @override
@@ -105,9 +130,7 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
         '$_cartUrl/items',
         options: Options(headers: _getHeaders()),
       );
-    } catch (e) {
-      // Ignore
-    }
+    } catch (_) {}
   }
 
   List<CartItemModel> _parseCartItems(dynamic data) {

@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/config/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
-import '../../../../core/widgets/custom_button.dart';
-import '../../../03_product_and_category/domain/entities/product.dart';
+import '../../../../features/03_product_and_category/domain/entities/product.dart';
 
 class WishlistItemCard extends StatelessWidget {
   final Product product;
@@ -47,14 +46,16 @@ class WishlistItemCard extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min, // ✅ ایرر فکس: Content کو سکڑنے دیں
           children: [
-            // 1. Image & Badges
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                  child: AspectRatio(
-                    aspectRatio: 1.1, // چوکور سے تھوڑا اونچا
+            // --- 1. Image Section (Flexible) ---
+            Expanded( // ✅ Image کو Expanded بنائیں تاکہ باقی جگہ لے سکے
+              flex: 5, // تصویر کو زیادہ حصہ دیں
+              child: Stack(
+                fit: StackFit.expand, // تصویر کو پورا پھیلائیں
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                     child: CachedNetworkImage(
                       imageUrl: product.imageUrl,
                       fit: BoxFit.cover,
@@ -64,103 +65,115 @@ class WishlistItemCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                ),
-                // Discount Badge [cite: 344]
-                if (discountPercent != null)
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.error,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        "-$discountPercent%",
-                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+
+                  // Discount Badge
+                  if (discountPercent != null)
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.error,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          "-$discountPercent%",
+                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ),
-                  ),
-                // Remove Button (Heart Filled)
-                Positioned(
-                  top: 4,
-                  right: 4,
-                  child: IconButton(
-                    icon: const Icon(Icons.favorite, color: AppColors.error),
-                    onPressed: onRemove,
-                  ),
-                ),
-              ],
-            ),
 
-            // 2. Details
-            Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Rating
-                  Row(
-                    children: [
-                      const Icon(Icons.star, size: 14, color: AppColors.warning),
-                      const SizedBox(width: 4),
-                      Text(
-                        "${product.rating} (${product.reviewCount})",
-                        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-
-                  // Title
-                  Text(
-                    product.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                  ),
-                  const SizedBox(height: 6),
-
-                  // Price [cite: 347]
-                  Row(
-                    children: [
-                      Text(
-                        AppFormatters.formatPrice(product.price),
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                      ),
-                      if (regularVal > priceVal) ...[
-                        const SizedBox(width: 6),
-                        Text(
-                          AppFormatters.formatPrice(product.regularPrice),
-                          style: const TextStyle(
-                            decoration: TextDecoration.lineThrough,
-                            color: AppColors.textSecondary,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Add to Cart Button [cite: 351]
-                  SizedBox(
-                    width: double.infinity,
-                    height: 32,
-                    child: ElevatedButton(
-                      onPressed: onAddToCart,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        padding: EdgeInsets.zero,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text("Add to Cart", style: TextStyle(fontSize: 12, color: Colors.white)),
+                  // Remove Button
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: IconButton(
+                      icon: const Icon(Icons.favorite, color: AppColors.error, size: 20),
+                      onPressed: onRemove,
+                      splashRadius: 20,
                     ),
                   ),
                 ],
+              ),
+            ),
+
+            // --- 2. Details Section (Flexible) ---
+            Expanded( // ✅ Details کو بھی Expanded بنائیں تاکہ باقی بچی جگہ لے سکے
+              flex: 4, // ڈیٹیلز کو تھوڑا کم حصہ دیں
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween, // جگہ برابر تقسیم کریں
+                  children: [
+                    // Rating
+                    Row(
+                      children: [
+                        const Icon(Icons.star, size: 12, color: AppColors.warning),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            "${product.rating} (${product.reviewCount})",
+                            style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Title
+                    Text(
+                      product.name,
+                      maxLines: 2, // 2 لائنوں تک جانے دیں
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12, height: 1.2),
+                    ),
+
+                    // Price
+                    Row(
+                      children: [
+                        Text(
+                          AppFormatters.formatPrice(product.price),
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.primary),
+                        ),
+                        if (regularVal > priceVal) ...[
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              AppFormatters.formatPrice(product.regularPrice),
+                              style: const TextStyle(
+                                decoration: TextDecoration.lineThrough,
+                                color: AppColors.textSecondary,
+                                fontSize: 10,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+
+                    // Add to Cart Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 30, // بٹن کی اونچائی فکس کریں
+                      child: ElevatedButton(
+                        onPressed: onAddToCart,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          padding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text("Add to Cart", style: TextStyle(fontSize: 11, color: Colors.white)),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

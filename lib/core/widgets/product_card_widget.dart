@@ -6,14 +6,13 @@ import '../config/app_colors.dart';
 import '../utils/formatters.dart';
 import 'loading_indicator.dart';
 
-// 👇 Product Entity Import کریں
+// Product Entity Import
 import '../../features/03_product_and_category/domain/entities/product.dart';
 import '../../features/06_wishlist/presentation/cubit/wishlist_cubit.dart';
 import '../../features/06_wishlist/presentation/cubit/wishlist_state.dart';
 
 class ProductCardWidget extends StatelessWidget {
-  final Product product; // ✅ تبدیلی: اب ہمیں پورا پروڈکٹ چاہیے
-  // باقی چیزیں ویسے ہی رہنے دیں تاکہ UI نہ ٹوٹے
+  final Product product;
   final String title;
   final String imageUrl;
   final double price;
@@ -25,7 +24,7 @@ class ProductCardWidget extends StatelessWidget {
 
   const ProductCardWidget({
     super.key,
-    required this.product, // ✅ یہاں شامل کریں
+    required this.product,
     required this.title,
     required this.imageUrl,
     required this.price,
@@ -60,41 +59,55 @@ class ProductCardWidget extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min, // ✅ ایرر فکس: Content کو جتنا ہو سکے سکڑنے دیں
           children: [
-            // Image Section
+            // --- 1. Image Section (Fixed Height) ---
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
                   child: SizedBox(
-                    height: 140,
+                    height: 125, // تھوڑی سی ہائٹ کم کی تاکہ نیچے جگہ بچے
                     width: double.infinity,
                     child: CachedNetworkImage(
                       imageUrl: imageUrl,
                       fit: BoxFit.cover,
                       placeholder: (context, url) => const Center(child: LoadingIndicator(size: 20)),
-                      errorWidget: (context, url, error) => Container(color: Colors.grey[200], child: const Icon(Icons.image_not_supported)),
+                      errorWidget: (context, url, error) => Container(
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.image_not_supported, color: Colors.grey),
+                      ),
                     ),
                   ),
                 ),
+
+                // Discount Badge
                 if (discountPercent != null)
                   Positioned(
                     top: 8, left: 8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(color: AppColors.error, borderRadius: BorderRadius.circular(8)),
-                      child: Text('$discountPercent% OFF', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.error,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        '$discountPercent% OFF',
+                        style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
 
-                // ❤️ Wishlist Button Logic
+                // Wishlist Button
                 Positioned(
-                  top: 4, right: 4,
+                  top: 0, right: 0,
                   child: BlocBuilder<WishlistCubit, WishlistState>(
                     builder: (context, state) {
                       bool isWishlisted = false;
                       if (state is WishlistLoaded) {
-                        // چیک کریں کہ کیا پروڈکٹ لسٹ میں ہے؟
                         isWishlisted = state.wishlist.any((item) => item.id == product.id);
                       }
 
@@ -102,12 +115,10 @@ class ProductCardWidget extends StatelessWidget {
                         icon: Icon(
                           isWishlisted ? Icons.favorite : Icons.favorite_border,
                           color: isWishlisted ? AppColors.error : AppColors.textSecondary,
-                          size: 20,
+                          size: 18,
                         ),
                         onPressed: () {
-                          // ✅ اب یہاں ہم پورا پروڈکٹ بھیج رہے ہیں
                           context.read<WishlistCubit>().toggleWishlist(product);
-
                           ScaffoldMessenger.of(context).hideCurrentSnackBar();
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
@@ -124,28 +135,101 @@ class ProductCardWidget extends StatelessWidget {
               ],
             ),
 
-            // Details Section
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [const Icon(Icons.star, color: AppColors.warning, size: 14), const SizedBox(width: 4), Text('$rating ($reviewCount)', style: Theme.of(context).textTheme.bodySmall)]),
-                  const SizedBox(height: 6),
-                  Text(title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(AppFormatters.formatPrice(price), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.primary)),
-                      InkWell(
-                        onTap: onAddToCart,
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.add_shopping_cart, color: Colors.white, size: 18)),
+            // --- 2. Details Section (Flexible) ---
+            Flexible( // Expanded کی جگہ Flexible استعمال کریں
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min, // اہم
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Rating Row
+                    Row(
+                      children: [
+                        const Icon(Icons.star, color: AppColors.warning, size: 12),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            '$rating ($reviewCount)',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Title
+                    Text(
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        height: 1.2,
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(height: 6),
+
+                    // Price & Cart Button Row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end, // نیچے سے الائن کریں
+                      children: [
+                        // Price Column
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (regularPrice != null && regularPrice! > price)
+                                Text(
+                                  AppFormatters.formatPrice(regularPrice),
+                                  style: const TextStyle(
+                                    decoration: TextDecoration.lineThrough,
+                                    color: AppColors.textSecondary,
+                                    fontSize: 9,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              Text(
+                                AppFormatters.formatPrice(price),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: AppColors.primary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Add to Cart Button
+                        InkWell(
+                          onTap: onAddToCart,
+                          borderRadius: BorderRadius.circular(6),
+                          child: Container(
+                            padding: const EdgeInsets.all(5),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(
+                              Icons.add_shopping_cart,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

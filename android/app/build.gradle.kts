@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.goshary.goshary"
+    namespace = "com.app.goshary"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -21,7 +21,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.goshary.goshary"
+        applicationId = "com.app.goshary"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

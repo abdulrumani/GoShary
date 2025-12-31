@@ -6,4 +6,5 @@ class StorageKeys {
   static const String appLang = 'app_language_code'; // 'en' or 'ar'
   static const String isFirstTime = 'is_first_time_open';
   static const String cartToken = 'wc_cart_token';
+  static const String wcNonce = 'wc_store_api_nonce';
 }

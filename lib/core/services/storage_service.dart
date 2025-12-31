@@ -41,7 +41,7 @@ class StorageService {
   bool get hasToken => _prefs.containsKey(StorageKeys.userToken);
 
   // ================================================================
-  // 2. Cart Token (WooCommerce Store API کے لیے) ✅ NEW
+  // 2. Cart Token & Nonce (WooCommerce Store API) ✅ UPDATED
   // ================================================================
 
   /// کارٹ کا سیشن ٹوکن محفوظ کریں (تاکہ کارٹ خالی نہ ہو)
@@ -52,6 +52,16 @@ class StorageService {
   /// کارٹ کا ٹوکن حاصل کریں
   String? getCartToken() {
     return _prefs.getString(StorageKeys.cartToken);
+  }
+
+  /// ✅ نیا: Nonce (سیکیورٹی ٹوکن) محفوظ کریں
+  Future<void> saveWcNonce(String nonce) async {
+    await _prefs.setString(StorageKeys.wcNonce, nonce);
+  }
+
+  /// ✅ نیا: Nonce حاصل کریں
+  String? getWcNonce() {
+    return _prefs.getString(StorageKeys.wcNonce);
   }
 
   // ================================================================
@@ -90,6 +100,6 @@ class StorageService {
     await _prefs.remove(StorageKeys.userId);
     await _prefs.remove(StorageKeys.userName);
     await _prefs.remove(StorageKeys.userEmail);
-    // نوٹ: ہم Cart Token یا Language کو صاف نہیں کر رہے تاکہ یوزر کا تجربہ خراب نہ ہو
+    // نوٹ: ہم Cart Token یا Nonce کو صاف نہیں کر رہے تاکہ یوزر کا کارٹ محفوظ رہے
   }
 }

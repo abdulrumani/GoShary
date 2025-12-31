@@ -3,92 +3,92 @@ import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // --- Core Imports ---
-import '../api/api_client.dart';
-import '../api/interceptors/auth_interceptor.dart';
-import '../api/interceptors/logging_interceptor.dart';
-import 'storage_service.dart';
-import 'notification_service.dart'; // ✅ New Import
+import 'package:goshary_app/core/api/api_client.dart';
+import 'package:goshary_app/core/api/interceptors/auth_interceptor.dart';
+import 'package:goshary_app/core/api/interceptors/logging_interceptor.dart';
+import 'package:goshary_app/core/services/storage_service.dart';
+import 'package:goshary_app/core/services/notification_service.dart';
 
 // --- Feature 00: Splash ---
-import '../../features/00_splash/data/datasources/splash_remote_datasource.dart';
-import '../../features/00_splash/data/repositories/splash_repository_impl.dart';
-import '../../features/00_splash/domain/repositories/splash_repository.dart';
-import '../../features/00_splash/domain/usecases/get_splash_offers.dart';
-import '../../features/00_splash/presentation/cubit/splash_cubit.dart';
+import 'package:goshary_app/features/00_splash/data/datasources/splash_remote_datasource.dart';
+import 'package:goshary_app/features/00_splash/data/repositories/splash_repository_impl.dart';
+import 'package:goshary_app/features/00_splash/domain/repositories/splash_repository.dart';
+import 'package:goshary_app/features/00_splash/domain/usecases/get_splash_offers.dart';
+import 'package:goshary_app/features/00_splash/presentation/cubit/splash_cubit.dart';
 
 // --- Feature 01: Auth ---
-import '../../features/01_auth/data/datasources/auth_remote_datasource.dart';
-import '../../features/01_auth/data/repositories/auth_repository_impl.dart';
-import '../../features/01_auth/domain/repositories/auth_repository.dart';
-import '../../features/01_auth/domain/usecases/login_usecase.dart';
-import '../../features/01_auth/domain/usecases/signup_usecase.dart';
-import '../../features/01_auth/domain/usecases/login_with_phone_usecase.dart';
-import '../../features/01_auth/domain/usecases/verify_otp_usecase.dart';
-import '../../features/01_auth/domain/usecases/login_with_social_usecase.dart';
-import '../../features/01_auth/presentation/bloc/auth_bloc.dart';
+import 'package:goshary_app/features/01_auth/data/datasources/auth_remote_datasource.dart';
+import 'package:goshary_app/features/01_auth/data/repositories/auth_repository_impl.dart';
+import 'package:goshary_app/features/01_auth/domain/repositories/auth_repository.dart';
+import 'package:goshary_app/features/01_auth/domain/usecases/login_usecase.dart';
+import 'package:goshary_app/features/01_auth/domain/usecases/signup_usecase.dart';
+import 'package:goshary_app/features/01_auth/domain/usecases/login_with_phone_usecase.dart';
+import 'package:goshary_app/features/01_auth/domain/usecases/verify_otp_usecase.dart';
+import 'package:goshary_app/features/01_auth/domain/usecases/login_with_social_usecase.dart';
+import 'package:goshary_app/features/01_auth/presentation/bloc/auth_bloc.dart';
 
 // --- Feature 02: Home ---
-import '../../features/02_home/data/datasources/home_remote_datasource.dart';
-import '../../features/02_home/data/repositories/home_repository_impl.dart';
-import '../../features/02_home/domain/repositories/home_repository.dart';
-import '../../features/02_home/domain/usecases/get_home_data.dart';
-import '../../features/02_home/presentation/cubit/home_cubit.dart';
+import 'package:goshary_app/features/02_home/data/datasources/home_remote_datasource.dart';
+import 'package:goshary_app/features/02_home/data/repositories/home_repository_impl.dart';
+import 'package:goshary_app/features/02_home/domain/repositories/home_repository.dart';
+import 'package:goshary_app/features/02_home/domain/usecases/get_home_data.dart';
+import 'package:goshary_app/features/02_home/presentation/cubit/home_cubit.dart';
 
 // --- Feature 03: Product & Category ---
-import '../../features/03_product_and_category/data/datasources/product_remote_datasource.dart';
-import '../../features/03_product_and_category/data/repositories/product_repository_impl.dart';
-import '../../features/03_product_and_category/domain/repositories/product_repository.dart';
-import '../../features/03_product_and_category/domain/usecases/get_product_details.dart';
-import '../../features/03_product_and_category/domain/usecases/get_product_reviews.dart';
-import '../../features/03_product_and_category/domain/usecases/get_related_products.dart';
-import '../../features/03_product_and_category/domain/usecases/get_all_categories.dart';
-import '../../features/03_product_and_category/presentation/product_details/cubit/product_detail_cubit.dart';
-import '../../features/03_product_and_category/presentation/categories/cubit/category_cubit.dart';
+import 'package:goshary_app/features/03_product_and_category/data/datasources/product_remote_datasource.dart';
+import 'package:goshary_app/features/03_product_and_category/data/repositories/product_repository_impl.dart';
+import 'package:goshary_app/features/03_product_and_category/domain/repositories/product_repository.dart';
+import 'package:goshary_app/features/03_product_and_category/domain/usecases/get_product_details.dart';
+import 'package:goshary_app/features/03_product_and_category/domain/usecases/get_product_reviews.dart';
+import 'package:goshary_app/features/03_product_and_category/domain/usecases/get_related_products.dart';
+import 'package:goshary_app/features/03_product_and_category/domain/usecases/get_all_categories.dart';
+import 'package:goshary_app/features/03_product_and_category/presentation/product_details/cubit/product_detail_cubit.dart';
+import 'package:goshary_app/features/03_product_and_category/presentation/categories/cubit/category_cubit.dart';
 
 // --- Feature 04: Cart ---
-import '../../features/04_cart/data/datasources/cart_remote_datasource.dart';
-import '../../features/04_cart/data/repositories/cart_repository_impl.dart';
-import '../../features/04_cart/domain/repositories/cart_repository.dart';
-import '../../features/04_cart/domain/usecases/get_cart.dart';
-import '../../features/04_cart/domain/usecases/add_to_cart.dart';
-import '../../features/04_cart/domain/usecases/update_cart_item.dart';
-import '../../features/04_cart/domain/usecases/remove_cart_item.dart';
-import '../../features/04_cart/presentation/cubit/cart_cubit.dart';
+import 'package:goshary_app/features/04_cart/data/datasources/cart_remote_datasource.dart';
+import 'package:goshary_app/features/04_cart/data/repositories/cart_repository_impl.dart';
+import 'package:goshary_app/features/04_cart/domain/repositories/cart_repository.dart';
+import 'package:goshary_app/features/04_cart/domain/usecases/get_cart.dart';
+import 'package:goshary_app/features/04_cart/domain/usecases/add_to_cart.dart';
+import 'package:goshary_app/features/04_cart/domain/usecases/update_cart_item.dart';
+import 'package:goshary_app/features/04_cart/domain/usecases/remove_cart_item.dart';
+import 'package:goshary_app/features/04_cart/presentation/cubit/cart_cubit.dart';
 
 // --- Feature 05: Checkout ---
-import '../../features/05_checkout/data/datasources/checkout_remote_datasource.dart';
-import '../../features/05_checkout/data/repositories/checkout_repository_impl.dart';
-import '../../features/05_checkout/domain/repositories/checkout_repository.dart';
-import '../../features/05_checkout/domain/usecases/apply_coupon_usecase.dart';
-import '../../features/05_checkout/domain/usecases/place_order_usecase.dart';
-import '../../features/05_checkout/presentation/bloc/checkout_bloc.dart';
+import 'package:goshary_app/features/05_checkout/data/datasources/checkout_remote_datasource.dart';
+import 'package:goshary_app/features/05_checkout/data/repositories/checkout_repository_impl.dart';
+import 'package:goshary_app/features/05_checkout/domain/repositories/checkout_repository.dart';
+import 'package:goshary_app/features/05_checkout/domain/usecases/apply_coupon_usecase.dart';
+import 'package:goshary_app/features/05_checkout/domain/usecases/place_order_usecase.dart';
+import 'package:goshary_app/features/05_checkout/presentation/bloc/checkout_bloc.dart';
 
 // --- Feature 06: Wishlist ---
-import '../../features/06_wishlist/data/datasources/wishlist_remote_datasource.dart';
-import '../../features/06_wishlist/data/repositories/wishlist_repository_impl.dart';
-import '../../features/06_wishlist/domain/repositories/wishlist_repository.dart';
-import '../../features/06_wishlist/domain/usecases/get_wishlist_usecase.dart';
-import '../../features/06_wishlist/domain/usecases/toggle_wishlist_usecase.dart';
-import '../../features/06_wishlist/presentation/cubit/wishlist_cubit.dart';
+import 'package:goshary_app/features/06_wishlist/data/datasources/wishlist_remote_datasource.dart';
+import 'package:goshary_app/features/06_wishlist/data/repositories/wishlist_repository_impl.dart';
+import 'package:goshary_app/features/06_wishlist/domain/repositories/wishlist_repository.dart';
+import 'package:goshary_app/features/06_wishlist/domain/usecases/get_wishlist_usecase.dart';
+import 'package:goshary_app/features/06_wishlist/domain/usecases/toggle_wishlist_usecase.dart';
+import 'package:goshary_app/features/06_wishlist/presentation/cubit/wishlist_cubit.dart';
 
 // --- Feature 07: Account & Support ---
-import '../../features/07_account_and_support/data/datasources/order_datasource.dart';
-import '../../features/07_account_and_support/data/datasources/tracking_datasource.dart';
-import '../../features/07_account_and_support/data/repositories/order_repository_impl.dart';
-import '../../features/07_account_and_support/domain/repositories/order_repository.dart';
-import '../../features/07_account_and_support/domain/usecases/get_my_orders_usecase.dart';
-import '../../features/07_account_and_support/presentation/orders/cubit/order_cubit.dart';
+import 'package:goshary_app/features/07_account_and_support/data/datasources/order_datasource.dart';
+import 'package:goshary_app/features/07_account_and_support/data/datasources/tracking_datasource.dart';
+import 'package:goshary_app/features/07_account_and_support/data/repositories/order_repository_impl.dart';
+import 'package:goshary_app/features/07_account_and_support/domain/repositories/order_repository.dart';
+import 'package:goshary_app/features/07_account_and_support/domain/usecases/get_my_orders_usecase.dart';
+import 'package:goshary_app/features/07_account_and_support/presentation/orders/cubit/order_cubit.dart';
 
 // --- Feature 08: Rewards ---
-import '../../features/08_rewards/data/datasources/rewards_datasource.dart';
-import '../../features/08_rewards/data/repositories/rewards_repository_impl.dart';
-import '../../features/08_rewards/domain/repositories/rewards_repository.dart';
-import '../../features/08_rewards/domain/usecases/get_wallet_usecase.dart';
-import '../../features/08_rewards/domain/usecases/get_points_usecase.dart';
-import '../../features/08_rewards/domain/usecases/get_referral_data.dart';
+import 'package:goshary_app/features/08_rewards/data/datasources/rewards_datasource.dart';
+import 'package:goshary_app/features/08_rewards/data/repositories/rewards_repository_impl.dart';
+import 'package:goshary_app/features/08_rewards/domain/repositories/rewards_repository.dart';
+import 'package:goshary_app/features/08_rewards/domain/usecases/get_wallet_usecase.dart';
+import 'package:goshary_app/features/08_rewards/domain/usecases/get_points_usecase.dart';
+import 'package:goshary_app/features/08_rewards/domain/usecases/get_referral_data.dart';
 
 // --- Feature 09: Notifications ---
-import '../../features/09_notifications/presentation/cubit/notification_cubit.dart';
+import 'package:goshary_app/features/09_notifications/presentation/cubit/notification_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -104,7 +104,7 @@ Future<void> setupServiceLocator() async {
   // 2. Core
   // ================================================================
   sl.registerLazySingleton(() => StorageService(sharedPreferences: sl()));
-  sl.registerLazySingleton(() => AuthInterceptor(sharedPreferences: sl()));
+  sl.registerLazySingleton(() => AuthInterceptor());
   sl.registerLazySingleton(() => LoggingInterceptor());
   sl.registerLazySingleton(() => ApiClient(sharedPreferences: sl()));
 
