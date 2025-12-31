@@ -1,11 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-// Core & UseCases
 import '../../../../core/services/storage_service.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/signup_usecase.dart';
 import '../../domain/usecases/login_with_social_usecase.dart';
-
 import 'auth_event.dart';
 import 'auth_state.dart';
 
@@ -22,52 +19,45 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.storageService,
   }) : super(AuthInitial()) {
 
-    // 1. Login Handler
+    // 1. Email Login Handler
     on<LoginRequested>((event, emit) async {
       emit(AuthLoading());
-      try {
-        final user = await loginUser(event.params);
-        emit(AuthSuccess(user: user));
-      } catch (e) {
-        emit(AuthFailure(message: e.toString()));
-      }
+      final result = await loginUser(event.params);
+      result.fold(
+            (failure) => emit(AuthFailure(message: failure.message)),
+            (user) => emit(AuthSuccess(user: user)),
+      );
     });
 
     // 2. Signup Handler
     on<SignupRequested>((event, emit) async {
       emit(AuthLoading());
-      try {
-        final user = await signupUser(event.params);
-        emit(AuthSuccess(user: user));
-      } catch (e) {
-        emit(AuthFailure(message: e.toString()));
-      }
+      final result = await signupUser(event.params);
+      result.fold(
+            (failure) => emit(AuthFailure(message: failure.message)),
+            (user) => emit(AuthSuccess(user: user)),
+      );
     });
 
-    // 3. Social Login Handler
-    on<SocialLoginRequested>((event, emit) async {
+    // 3. Social Login Handler (✅ FIXED HERE)
+    on<LoginWithSocialEvent>((event, emit) async {
       emit(AuthLoading());
-      try {
-        // نوٹ: اصلی سوشل لاگ ان میں ہمیں پہلے Google/Facebook SDK سے ٹوکن لینا ہوتا ہے۔
-        // یہاں ہم فرض کر رہے ہیں کہ ٹوکن مل گیا ہے۔
-        // (مکمل کوڈ میں آپ یہاں GoogleSignIn().signIn() کال کریں گے)
 
-        const fakeToken = "sample_social_token_123";
+      // ہم ٹوکن خالی بھیج رہے ہیں کیونکہ RemoteDataSource خود Google سے ٹوکن لے گا
+      final result = await loginWithSocial(
+        SocialLoginParams(provider: event.provider, token: ''),
+      );
 
-        final user = await loginWithSocial(
-          SocialLoginParams(provider: event.provider, token: fakeToken),
-        );
-        emit(AuthSuccess(user: user));
-      } catch (e) {
-        emit(AuthFailure(message: e.toString()));
-      }
+      result.fold(
+            (failure) => emit(AuthFailure(message: failure.message)),
+            (user) => emit(AuthSuccess(user: user)),
+      );
     });
 
     // 4. Logout Handler
     on<LogoutRequested>((event, emit) async {
-      emit(AuthLoading());
       await storageService.logout();
-      emit(Unauthenticated());
+      emit(AuthInitial());
     });
   }
 }

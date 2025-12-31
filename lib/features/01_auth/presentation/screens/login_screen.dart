@@ -16,7 +16,6 @@ import '../../domain/usecases/login_usecase.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
-import '../widgets/social_login_buttons.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -101,7 +100,6 @@ class _LoginViewState extends State<_LoginView> with SingleTickerProviderStateMi
         ),
         elevation: 0,
         backgroundColor: Colors.white,
-        // 👇 یہاں ہم نے Skip بٹن شامل کیا ہے
         actions: [
           TextButton(
             onPressed: () => _onSkipPressed(context),
@@ -157,7 +155,7 @@ class _LoginViewState extends State<_LoginView> with SingleTickerProviderStateMi
                         borderRadius: BorderRadius.circular(25),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
+                            color: Colors.black.withOpacity(0.05),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -179,6 +177,7 @@ class _LoginViewState extends State<_LoginView> with SingleTickerProviderStateMi
                     child: TabBarView(
                       controller: _tabController,
                       children: [
+                        // --- Email Form ---
                         Form(
                           key: _emailFormKey,
                           child: Column(
@@ -201,7 +200,7 @@ class _LoginViewState extends State<_LoginView> with SingleTickerProviderStateMi
                                 controller: _passwordController,
                                 isPassword: true,
                                 prefixIcon: Icons.lock_outline,
-                                validator: AppValidators.validatePassword, // Use validatePassword instead of validateRequired
+                                validator: AppValidators.validatePassword,
                               ),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -225,6 +224,8 @@ class _LoginViewState extends State<_LoginView> with SingleTickerProviderStateMi
                             ],
                           ),
                         ),
+
+                        // --- Phone Form ---
                         Form(
                           key: _phoneFormKey,
                           child: Column(
@@ -260,7 +261,40 @@ class _LoginViewState extends State<_LoginView> with SingleTickerProviderStateMi
                   const SizedBox(height: 24),
                   const Center(child: Text("Or sign in with", style: TextStyle(color: AppColors.textSecondary))),
                   const SizedBox(height: 16),
-                  const SocialLoginButtons(),
+
+                  // ✅ Social Buttons Row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Google
+                      SocialButton(
+                        icon: "assets/icons/google.png",
+                        onTap: () {
+                          // ✅ Google Event Trigger
+                          context.read<AuthBloc>().add(const LoginWithSocialEvent(provider: 'google'));
+                        },
+                      ),
+                      const SizedBox(width: 16),
+
+                      // Facebook
+                      SocialButton(
+                        icon: "assets/icons/facebook.png",
+                        onTap: () {
+                          context.read<AuthBloc>().add(const LoginWithSocialEvent(provider: 'facebook'));
+                        },
+                      ),
+                      const SizedBox(width: 16),
+
+                      // Apple
+                      SocialButton(
+                        icon: "assets/icons/apple.png",
+                        onTap: () {
+                          context.read<AuthBloc>().add(const LoginWithSocialEvent(provider: 'apple'));
+                        },
+                      ),
+                    ],
+                  ),
+
                   const SizedBox(height: 30),
 
                   Row(
@@ -281,6 +315,44 @@ class _LoginViewState extends State<_LoginView> with SingleTickerProviderStateMi
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+// ✅ SocialButton Widget (Updated Color)
+class SocialButton extends StatelessWidget {
+  final String icon;
+  final VoidCallback onTap;
+
+  const SocialButton({
+    super.key,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 50,
+        width: 50,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          // 👇 یہ لائن کلر کا مسئلہ حل کرے گی (AppColors.inputBorder کی جگہ)
+          border: Border.all(color: Colors.grey.shade300),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 5,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Image.asset(icon),
       ),
     );
   }
